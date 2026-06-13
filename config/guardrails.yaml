@@ -1,0 +1,90 @@
+# Guardrail-specific configuration
+# Toggle individual guards and set detection thresholds
+
+input_guards:
+  pii_detector:
+    enabled: true
+    # Confidence threshold for PII detection (0.0 to 1.0)
+    confidence_threshold: 0.8
+    # Action to take when PII is detected: "block" or "warn"
+    action: "block"
+    # Types of PII to detect
+    detect_types:
+      - "email"
+      - "phone"
+      - "ssn"
+      - "credit_card"
+      - "ip_address"
+
+  prompt_injection:
+    enabled: true
+    # Confidence threshold for injection detection (0.0 to 1.0)
+    confidence_threshold: 0.7
+    # Action when injection detected: "block" or "warn"
+    action: "block"
+    # Maximum allowed prompt length in characters
+    max_prompt_length: 10000
+
+  toxic_content:
+    enabled: true
+    # Confidence threshold for toxicity detection (0.0 to 1.0)
+    confidence_threshold: 0.75
+    # Action when toxic content detected: "block" or "warn"
+    action: "block"
+    # Categories of toxic content to detect
+    categories:
+      - "hate_speech"
+      - "harassment"
+      - "violence"
+      - "self_harm"
+      - "sexual_content"
+
+  topic_restriction:
+    enabled: true
+    # Action when off-topic content detected: "block" or "warn"
+    action: "warn"
+    # Allowed topics (empty means allow all)
+    allowed_topics: []
+    # Explicitly blocked topics
+    blocked_topics:
+      - "illegal_activities"
+      - "weapons_manufacturing"
+      - "drug_synthesis"
+
+output_guards:
+  pii_redactor:
+    enabled: true
+    # Character to use for redaction
+    redaction_char: "*"
+    # Minimum redacted segment length
+    min_redaction_length: 4
+    # Types of PII to redact in output
+    redact_types:
+      - "email"
+      - "phone"
+      - "ssn"
+      - "credit_card"
+      - "ip_address"
+
+  hallucination_detector:
+    enabled: true
+    # Confidence threshold for hallucination detection (0.0 to 1.0)
+    confidence_threshold: 0.6
+    # Action when hallucination suspected: "block" or "warn"
+    action: "warn"
+
+  content_filter:
+    enabled: true
+    # Confidence threshold for content filtering (0.0 to 1.0)
+    confidence_threshold: 0.75
+    # Action when inappropriate content found: "block" or "warn"
+    action: "block"
+
+  output_validator:
+    enabled: true
+    # Maximum allowed output length in characters
+    max_output_length: 50000
+    # Action when validation fails: "block" or "warn"
+    action: "block"
+    # Whether to enforce JSON schema validation when schema provided
+    enforce_schema: true

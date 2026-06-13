@@ -1,0 +1,20 @@
+# Production environment overrides
+# Applied when APP_ENV=prod
+
+app:
+  debug: false
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 8
+
+logging:
+  level: "WARNING"
+  format: "json"
+  include_timestamp: true
+
+llm:
+  provider: "openai"
+  timeout_seconds: 30
+  max_retries: 3

@@ -1,0 +1,20 @@
+# Development environment overrides
+# Applied when APP_ENV=dev
+
+app:
+  debug: true
+
+server:
+  host: "127.0.0.1"
+  port: 8000
+  workers: 1
+
+logging:
+  level: "DEBUG"
+  format: "console"
+  include_timestamp: true
+
+llm:
+  provider: "mock"
+  timeout_seconds: 60
+  max_retries: 1
