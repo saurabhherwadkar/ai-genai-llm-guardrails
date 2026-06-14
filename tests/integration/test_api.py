@@ -73,24 +73,18 @@ async def test_validate_clean_input(client):
 
 
 @pytest.mark.asyncio
-async def test_validate_pii_input_blocked(client):
-    """Verify PII-containing input is blocked via the API endpoint."""
-    # Build a request with PII in the input text.
+async def test_validate_pii_input_warned(client):
+    """Verify PII-containing input triggers warn (vault tokenizes instead of blocking)."""
     payload = {
         "input_text": "My email is secret@company.com and SSN is 123-45-6789.",
         "context": {},
         "process_with_llm": False,
     }
-    # Make POST request to the validation endpoint.
     response = await client.post("/api/v1/guardrails/validate", json=payload)
-    # Assert successful HTTP status code (validation itself succeeds).
     assert response.status_code == 200
-    # Parse the JSON response body.
     data = response.json()
-    # Assert the response blocks the PII input.
-    assert data["allowed"] is False
-    # Assert the overall action is block.
-    assert data["overall_action"] == "block"
+    assert data["allowed"] is True
+    assert data["overall_action"] == "warn"
 
 
 @pytest.mark.asyncio

@@ -49,16 +49,16 @@ async def test_clean_input_passes(engine):
 
 
 @pytest.mark.asyncio
-async def test_pii_input_blocked(engine):
-    """Verify input containing PII is blocked by the engine."""
-    # Process text with PII through the engine pipeline.
+async def test_pii_input_warned(engine):
+    """Verify input containing PII triggers a warn (vault tokenizes instead of blocking)."""
     response = await engine.process_request(
         input_text="My email is admin@secret.com and SSN is 123-45-6789."
     )
-    # Assert the response blocks the PII-containing input.
-    assert response.allowed is False
-    # Assert the overall action is block.
-    assert response.overall_action == "block"
+    assert response.allowed is True
+    assert response.overall_action == "warn"
+    pii_result = next(r for r in response.input_results if r.guard_name == "PIIDetectorGuard")
+    assert pii_result.passed is False
+    assert pii_result.action == "warn"
 
 
 @pytest.mark.asyncio
@@ -129,3 +129,25 @@ async def test_response_contains_input_text(engine):
     response = await engine.process_request(input_text=input_text)
     # Assert the original input text is included in response.
     assert response.input_text == input_text
+
+
+@pytest.mark.asyncio
+async def test_pii_vault_tokenizes_and_restores():
+    """Verify the vault tokenizes PII before LLM and restores it in output."""
+    from guardrails.llm.mock_provider import MockLLMProvider
+
+    # Mock provider echoes back whatever it receives.
+    class EchoProvider(MockLLMProvider):
+        async def generate(self, prompt, **kwargs):
+            return f"You said: {prompt}"
+
+    provider = EchoProvider({"mock_response": ""})
+    engine = GuardrailEngine(llm_provider=provider)
+
+    response = await engine.process_request(
+        input_text="My email is test@vault.com please help",
+        process_with_llm=True,
+    )
+    # The output should contain the original PII restored by the vault.
+    assert response.allowed is True
+    assert "test@vault.com" in (response.output_text or "")

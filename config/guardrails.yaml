@@ -1,13 +1,23 @@
 # Guardrail-specific configuration
 # Toggle individual guards and set detection thresholds
 
+pii_vault:
+  enabled: true
+  # Types of PII to tokenize before sending to LLM
+  detect_types:
+    - "email"
+    - "phone"
+    - "ssn"
+    - "credit_card"
+    - "ip_address"
+
 input_guards:
   pii_detector:
     enabled: true
     # Confidence threshold for PII detection (0.0 to 1.0)
     confidence_threshold: 0.8
     # Action to take when PII is detected: "block" or "warn"
-    action: "block"
+    action: "warn"
     # Types of PII to detect
     detect_types:
       - "email"

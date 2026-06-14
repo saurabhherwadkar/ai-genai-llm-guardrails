@@ -24,6 +24,7 @@ from guardrails.guards.output import (  # Output guard implementations.
 )
 from guardrails.models.guard_result import GuardResult  # Result data structure.
 from guardrails.models.responses import GuardrailResponse  # API response structure.
+from guardrails.utils.pii_vault import PIIVault  # Reversible PII tokenization.
 
 # Module-level logger instance for engine orchestration events.
 logger = get_logger(__name__)
@@ -205,10 +206,14 @@ class GuardrailEngine:
                 output_text=None,
                 summary="Input validation completed successfully",
             )
+        # Tokenize PII in input before sending to LLM.
+        vault_config = self._guardrails_config.get("pii_vault", {})
+        pii_vault = PIIVault(detect_types=vault_config.get("detect_types"))
+        sanitized_input = pii_vault.tokenize(input_text) if vault_config.get("enabled", False) else input_text
         # Generate LLM response since input passed all guards.
         try:
-            # Call the configured LLM provider to generate a response.
-            llm_output = await self._llm_provider.generate(input_text)
+            # Call the configured LLM provider with PII-free input.
+            llm_output = await self._llm_provider.generate(sanitized_input)
             # Log successful LLM response generation.
             logger.info("llm_response_generated", output_length=len(llm_output))
         except Exception as e:
@@ -237,6 +242,9 @@ class GuardrailEngine:
         has_warnings = any(
             r.action == GuardAction.WARN.value for r in input_results + output_results
         )
+        # Restore original PII values in output if vault has tokens.
+        if pii_vault.has_pii:
+            final_text = pii_vault.detokenize(final_text)
         # Determine the final overall action for the complete request.
         if output_blocked:
             # Output was blocked — return with block action and no output.
